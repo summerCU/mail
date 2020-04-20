@@ -62,7 +62,7 @@ public class BrandServiceImpl implements BrandService {
 	}
 
 	@Override
-	public PageResult findPage(TbBrand brand, int pageNum, int pageSize) {
+	public PageResult findPage(TbBrand brand, Integer pageNum, Integer pageSize) {
 		
 		PageHelper.startPage(pageNum, pageSize);//分页	
 		

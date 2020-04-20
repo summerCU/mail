@@ -26,11 +26,12 @@ public class BrandController {
 		return brandService.findAll();		
 	}
 	
+
 	@RequestMapping("/findPage")
 	public PageResult findPage(int page,int size){
 		return brandService.findPage(page, size);
 	}
-	
+
 	@RequestMapping("/add")
 	public Result add(@RequestBody TbBrand brand){
 		try {
@@ -71,8 +72,9 @@ public class BrandController {
 	}
 	
 	@RequestMapping("/search")
-	public PageResult search(@RequestBody TbBrand brand,int page,int size){
-		return brandService.findPage(brand, page, size);		
+	public PageResult search(@RequestBody TbBrand brand,Integer page,Integer rows){
+		System.out.println("search"+page+rows);
+		return brandService.findPage(brand, page, rows);		
 	}
 	
 	@RequestMapping("selectOptionList")
