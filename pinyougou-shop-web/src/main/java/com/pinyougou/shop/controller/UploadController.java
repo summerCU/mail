@@ -22,7 +22,8 @@ public class UploadController {
 		String extName = originalFilename.substring(originalFilename.lastIndexOf(".")+1);
 		
 		try {
-			util.FastDFSClient client = new FastDFSClient("classpath:/config/fdfs_client.conf");
+			//util.FastDFSClient client = new FastDFSClient("classpath:config/fdfs_client.conf");
+			util.FastDFSClient client = new FastDFSClient("E:\\fdfs_client.conf");
 			String fileId = client.uploadFile(file.getBytes(),extName);
 			String url = file_server_url+fileId;
 			return new Result(true, url);

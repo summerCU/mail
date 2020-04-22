@@ -58,11 +58,12 @@ app.controller('itemCatController' ,function($scope,$controller   ,itemCatServic
 	 
 	//批量删除 
 	$scope.dele=function(){			
-		//获取选中的复选框			
+		//获取选中的复选框
+		
 		itemCatService.dele( $scope.selectIds ).success(
 			function(response){
 				if(response.success){
-					$scope.reloadList();//刷新列表
+					$scope.findByParentId($scope.parentId);//重新加载
 					$scope.selectIds=[];
 				}						
 			}		
@@ -124,7 +125,7 @@ app.controller('itemCatController' ,function($scope,$controller   ,itemCatServic
     
 	//读取品牌列表
 	$scope.findTypeTemplateList=function(){
-		typeTemplateService.selectOptionList().success(
+		itemCatService.test(1).success(
 			function(response){
 				$scope.brandList={data:response};
 			}
