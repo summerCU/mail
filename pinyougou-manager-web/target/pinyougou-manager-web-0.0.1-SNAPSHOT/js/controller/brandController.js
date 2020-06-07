@@ -68,8 +68,8 @@ app.controller('brandController' ,function($scope,$controller   ,brandService){
 	$scope.searchEntity={};//定义搜索对象 
 	
 	//搜索
-	$scope.search=function(page,rows){
-		brandService.search($scope.searchEntity,page,rows).success(
+	$scope.search=function(page,rows){			
+		brandService.search(page,rows,$scope.searchEntity).success(
 			function(response){
 				$scope.list=response.rows;	
 				$scope.paginationConf.totalItems=response.total;//更新总记录数
