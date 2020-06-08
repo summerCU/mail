@@ -35,7 +35,8 @@ public class TbItem implements Serializable{
     private String status;
 
     private Date createTime;
-
+    
+    @Field("item_updatetime")
     private Date updateTime;
 
     private String itemSn;
@@ -63,6 +64,8 @@ public class TbItem implements Serializable{
 
     @Field("item_seller")
     private String seller;
+    
+
     
     @Dynamic
     @Field("item_spec_*")

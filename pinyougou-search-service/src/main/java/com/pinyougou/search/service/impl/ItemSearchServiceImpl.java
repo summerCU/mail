@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.solr.core.SolrTemplate;
 import org.springframework.data.solr.core.query.Criteria;
@@ -18,6 +19,7 @@ import org.springframework.data.solr.core.query.Query;
 import org.springframework.data.solr.core.query.SimpleFilterQuery;
 import org.springframework.data.solr.core.query.SimpleHighlightQuery;
 import org.springframework.data.solr.core.query.SimpleQuery;
+import org.springframework.data.solr.core.query.SolrDataQuery;
 import org.springframework.data.solr.core.query.result.GroupEntry;
 import org.springframework.data.solr.core.query.result.GroupPage;
 import org.springframework.data.solr.core.query.result.GroupResult;
@@ -38,6 +40,10 @@ public class ItemSearchServiceImpl implements ItemSearchService {
 	@Override
 	public Map search(Map searchMap) {
 		Map map=new HashMap();
+		//空格处理
+		String keywords= (String)searchMap.get("keywords");
+		searchMap.put("keywords", keywords.replace(" ", ""));//关键字去掉空格 
+		
 		//1.查询列表
 		map.putAll(searchList(searchMap));
 		//2.分组查询 商品分类列表
@@ -46,7 +52,7 @@ public class ItemSearchServiceImpl implements ItemSearchService {
 		
 		//3.查询品牌和规格列表
 		String category= (String) searchMap.get("category");
-		if(!"".equals(category)){						
+		if(!category.equals("")){						
 			map.putAll(searchBrandAndSpecList(category));
 		}else{
 			if(categoryList.size()>0){			
@@ -62,7 +68,7 @@ public class ItemSearchServiceImpl implements ItemSearchService {
 	private Map searchList(Map searchMap){
 		Map map=new HashMap();
 		//高亮选项初始化
-		HighlightQuery query=new SimpleHighlightQuery();		
+		HighlightQuery query=new SimpleHighlightQuery();//在query中加入搜索条件		
 		HighlightOptions highlightOptions=new HighlightOptions().addField("item_title");//高亮域
 		highlightOptions.setSimplePrefix("<em style='color:red'>");//前缀
 		highlightOptions.setSimplePostfix("</em>");		
@@ -101,6 +107,55 @@ public class ItemSearchServiceImpl implements ItemSearchService {
 			
 		}
 		
+		//1.5按价格过滤
+		if(!"".equals(searchMap.get("price")) ){
+			String[] price = ((String) searchMap.get("price")).split("-");
+			if(!price[0].equals("0")){ //如果最低价格不等于0
+				FilterQuery filterQuery=new SimpleFilterQuery();
+				Criteria filterCriteria=new Criteria("item_price").greaterThanEqual(price[0]);
+				filterQuery.addCriteria(filterCriteria);
+				query.addFilterQuery(filterQuery);	
+			}
+			if(!price[1].equals("*")){ //如果最高价格不等于*
+				FilterQuery filterQuery=new SimpleFilterQuery();
+				Criteria filterCriteria=new Criteria("item_price").lessThanEqual(price[1]);
+				filterQuery.addCriteria(filterCriteria);
+				query.addFilterQuery(filterQuery);	
+			}			
+		}
+		
+		
+		//1.6 分页
+		Integer pageNo= (Integer) searchMap.get("pageNo");//获取页码
+		if(pageNo==null){
+			pageNo=1;
+		}
+		Integer pageSize= (Integer) searchMap.get("pageSize");//获取页大小
+		if(pageSize==null){
+			pageSize=20;
+		}
+		
+		query.setOffset( (pageNo-1)*pageSize  );//起始索引
+		query.setRows(pageSize);//每页记录数
+		
+		
+		//1.7 排序
+		
+		String sortValue= (String)searchMap.get("sort");//升序ASC 降序DESC
+		String sortField=  (String)searchMap.get("sortField");//排序字段
+		
+		if(sortValue!=null && !sortValue.equals("")){
+			
+			if(sortValue.equals("ASC")){
+				Sort sort=new Sort(Sort.Direction.ASC, "item_"+sortField);
+				query.addSort(sort);				
+			}
+			if(sortValue.equals("DESC")){
+				Sort sort=new Sort(Sort.Direction.DESC, "item_"+sortField);
+				query.addSort(sort);				
+			}
+		}
+		
 		
 		
 		//***********  获取高亮结果集  ***********
@@ -122,6 +177,8 @@ public class ItemSearchServiceImpl implements ItemSearchService {
 			}			
 		}
 		map.put("rows", page.getContent());
+		map.put("totalPages", page.getTotalPages());//总页数
+		map.put("total", page.getTotalElements());//总记录数
 		return map;
 		
 	}
@@ -181,6 +238,24 @@ public class ItemSearchServiceImpl implements ItemSearchService {
 		}	
 		
 		return map;
+	}
+
+
+	@Override
+	public void importList(List list) {
+		solrTemplate.saveBeans(list);
+		solrTemplate.commit();
+	}
+
+
+	@Override
+	public void deleteByGoodsIds(List goodsIds) {
+				
+		Query query=new SimpleQuery("*:*");		
+		Criteria criteria=new Criteria("item_goodsid").in(goodsIds);
+		query.addCriteria(criteria);		
+		solrTemplate.delete(query);
+		solrTemplate.commit();
 	}
 	
 	
